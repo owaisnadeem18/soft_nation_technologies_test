@@ -1,6 +1,6 @@
 "use client"
 
-import { logo } from '@/assets'
+import { hamburger, logo } from '@/assets'
 import Image from 'next/image'
 import React, { useState } from 'react'
 
@@ -57,13 +57,13 @@ const Header = () => {
               onClick={() => setIsOpen(!isOpen)}
               className="text-gray-800 p-2"
             >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                {isOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-                )}
-              </svg>
+                {isOpen ?
+<svg className="h-12 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+</svg>
+                 : 
+                <Image src={hamburger} alt="Hamburger Icon" className="" />
+                }
             </button>
           </div>
         </div>
