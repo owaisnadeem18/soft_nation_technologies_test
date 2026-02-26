@@ -1,7 +1,8 @@
 import React from 'react';
 import { Facebook, Twitter, Linkedin, Phone } from 'lucide-react';
-import { logo } from '@/assets'; // Assuming same logo path as header
+
 import Image from 'next/image';
+import { logo } from '@/assets';
 
 const Footer = () => {
   const navLinks = [
