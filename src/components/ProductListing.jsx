@@ -1,117 +1,194 @@
 "use client"
 
-import React from 'react';
-import Image from 'next/image';
-import { ChevronRight, ChevronUp } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ChevronRight, ChevronUp, Star } from 'lucide-react';
+import { useRouter, useParams } from 'next/navigation';
+import { Spinner } from './ui/spinner';
 
 const ProductListing = () => {
+  const router = useRouter();
+  const { id: categoryId } = useParams();
 
-  const router = useRouter()
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(4);
 
-  console.log("router is => ", router)
-  
-  // Fake array for structure (Baad mein API yahan map hogi)
-  const products = Array(5).fill(null);
+  // Filter States
+  const [selectedRatings, setSelectedRatings] = useState([]);
+  const [selectedPriceRanges, setSelectedPriceRanges] = useState([]);
+
+  // 1. Fetch Data
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const url = categoryId 
+          ? `https://fakestoreapi.com/products/category/${categoryId}`
+          : `https://fakestoreapi.com/products`;
+        const res = await fetch(url);
+        const data = await res.json();
+        setProducts(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, [categoryId]);
+
+  // 2. DYNAMIC PRICE RANGES (Requirement: Not hardcoded)
+  const priceRanges = useMemo(() => {
+    if (products.length === 0) return [];
+    const prices = products.map(p => p.price);
+    const min = Math.floor(Math.min(...prices));
+    const max = Math.ceil(Math.max(...prices));
+    
+    // Dividing price into 3 dynamic buckets
+    const step = (max - min) / 3;
+    return [
+      { label: `$${min} - $${Math.round(min + step)}`, min: min, max: min + step },
+      { label: `$${Math.round(min + step)} - $${Math.round(min + 2 * step)}`, min: min + step, max: min + 2 * step },
+      { label: `$${Math.round(min + 2 * step)} - $${max}`, min: min + 2 * step, max: max },
+    ];
+  }, [products]);
+
+  // 3. FILTERING LOGIC
+  const filteredProducts = useMemo(() => {
+    return products.filter(product => {
+      // Rating Filter
+      const matchesRating = selectedRatings.length === 0 || 
+        selectedRatings.some(r => Math.floor(product.rating.rate) >= r);
+
+      // Price Filter
+      const matchesPrice = selectedPriceRanges.length === 0 || 
+        selectedPriceRanges.some(range => product.price >= range.min && product.price <= range.max);
+
+      return matchesRating && matchesPrice;
+    });
+  }, [products, selectedRatings, selectedPriceRanges]);
+
+  // Handle Selection
+  const toggleRating = (rate) => {
+    setSelectedRatings(prev => prev.includes(rate) ? prev.filter(r => r !== rate) : [...prev, rate]);
+  };
+
+  const togglePrice = (range) => {
+    setSelectedPriceRanges(prev => prev.some(r => r.label === range.label) 
+      ? prev.filter(r => r.label !== range.label) : [...prev, range]);
+  };
+
+  if (loading) 
+  {
+    return (
+  <div className="min-h-screen w-full flex items-center justify-center">
+    <Spinner size="lg" />
+  </div>
+);
+}
 
   return (
     <div className="bg-white min-h-screen font-sans">
       <div className="container mx-auto py-10 flex flex-col md:flex-row gap-8">
         
-        {/* LEFT SIDE: Filter Sidebar (Fixed width on desktop) */}
-        <aside className="w-full md:w-64 shrink-0">
-            <div className='flex items-center' >
-
-          <h2 className="text-2xl font-bold">Filter</h2>
-          <ChevronRight className="w-5 h-5 text-black flex sm:hidden " />
-            </div>
+        {/* SIDEBAR */}
+        <aside className="w-full md:w-64 shrink-0 border-r border-gray-50 pr-4">
+          <h2 className="text-2xl font-bold mb-6 uppercase tracking-tighter">Filter</h2>
           
-          {/* Price Filter */}
-          <div className=" py-4">
-            <div className="flex justify-between items-center mb-4 cursor-pointer">
-              <span className="font-semibold text-gray-800">Price</span>
-              <ChevronUp/>
+          {/* Price Filter (Dynamic) */}
+          <div className="py-4 border-t">
+            <div className="flex justify-between items-center mb-4">
+              <span className="font-bold text-gray-800">Price</span>
+              <ChevronUp size={16}/>
             </div>
             <div className="space-y-3">
-              {['$100-$299.99 (7)', '$300-$499.99 (11)', '$500-$799.99 (46)'].map((range) => (
-                <label key={range} className="flex items-center gap-3 text-gray-600 cursor-pointer hover:text-blue-600">
-                  <input type="checkbox" className="w-4 h-4 rounded border-gray-300" />
-                  <span className="text-sm">{range}</span>
+              {priceRanges.map((range) => (
+                <label key={range.label} className="flex items-center gap-3 text-sm text-gray-600 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    onChange={() => togglePrice(range)}
+                    className="w-4 h-4 rounded border-gray-300 accent-[#1D61B9]" 
+                  />
+                  {range.label}
                 </label>
               ))}
-              <button className="text-blue-600 text-xs font-semibold mt-2">See more</button>
             </div>
           </div>
 
           {/* Rating Filter */}
-          <div className="border-t border-b border-[#CCCCCC] py-4">
-            <div className="flex justify-between items-center mb-4 cursor-pointer">
-              <span className="font-semibold text-gray-800">Rating</span>
-            <ChevronUp/>
+          <div className="py-4 border-t">
+            <div className="flex justify-between items-center mb-4">
+              <span className="font-bold text-gray-800">Rating</span>
+              <ChevronUp size={16}/>
             </div>
             <div className="space-y-3">
               {[5, 4, 3].map((star) => (
                 <label key={star} className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" className="w-4 h-4 rounded border-gray-300" />
-                  <div className="flex text-yellow-400 text-sm">
-                    {"★".repeat(star)}{"☆".repeat(5-star)}
+                  <input 
+                    type="checkbox" 
+                    onChange={() => toggleRating(star)}
+                    className="w-4 h-4 rounded border-gray-300 accent-[#1D61B9]" 
+                  />
+                  <div className="flex text-yellow-400">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} size={14} fill={i < star ? "currentColor" : "none"} />
+                    ))}
+                    <span className="text-gray-400 text-[10px] ml-1">& Up</span>
                   </div>
                 </label>
               ))}
-              <button className="text-blue-600 text-xs font-semibold mt-2">See more</button>
             </div>
           </div>
         </aside>
 
-        {/* RIGHT SIDE: Product List */}
+        {/* PRODUCT LIST */}
         <main className="flex-1 space-y-4">
-          {products.map((_, index) => (
+          <p className="text-xs text-gray-400 mb-4 font-bold uppercase tracking-widest">
+            Showing {filteredProducts.length} results for "{categoryId || 'All Products'}"
+          </p>
+          
+          {filteredProducts.slice(0, visibleCount).map((product) => (
             <div
-              onClick={() => router.push(`/product/${index + 1}`)} 
-              key={index} 
-              className="border border-gray-200 rounded-sm p-6 flex flex-col lg:flex-row items-center gap-6 hover:shadow-md transition-shadow relative"
+              key={product.id}
+              onClick={() => router.push(`/product/${product.id}`)} 
+              className="border border-gray-100 rounded-lg p-6 flex flex-col lg:flex-row items-center gap-6 hover:shadow-lg hover:border-blue-100 transition-all cursor-pointer relative"
             >
-              {/* Product Image */}
-              <div className="w-48 h-32 relative shrink-0">
-                <div className="bg-gray-100 w-full h-full rounded flex items-center justify-center">
-                   {/* <Image src={productImg} alt="C9300L" className="object-contain" /> */}
-                   <span className="text-xs text-gray-400 italic">Product Image</span>
-                </div>
+              <div className="w-40 h-32 relative shrink-0">
+                <img src={product.image} alt={product.title} className="w-full h-full object-contain" />
               </div>
 
-              {/* Product Info */}
               <div className="flex-1 text-center lg:text-left">
-                <h3 className="text-lg font-bold text-gray-900">C9300L-24P-4G-E</h3>
-                <p className="text-xs text-gray-500 mt-1 uppercase max-w-md">
-                  Catalyst 9300L 24P POE NTWK Essentials 4X1G Uplink
-                </p>
-                <div className="flex items-center justify-center lg:justify-start gap-2 mt-3">
-                  <div className="flex text-yellow-400 text-sm">★★★★☆</div>
-                  <span className="text-xs text-gray-400">4.4 (88)</span>
+                <h3 className="text-lg font-bold text-gray-900 leading-tight">{product.title}</h3>
+                <p className="text-[11px] text-gray-400 mt-2 uppercase font-medium line-clamp-2">{product.description}</p>
+                <div className="flex items-center justify-center lg:justify-start gap-2 mt-4">
+                  <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-[10px] font-bold">★ {product.rating.rate}</span>
+                  <span className="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">{product.rating.count} Reviews</span>
                 </div>
               </div>
 
-              {/* Price & Action Section */}
-              <div className="w-full lg:w-48 border-t lg:border-t-0 lg:border-l border-gray-100 pt-4 lg:pt-0 lg:pl-6 flex flex-col items-center lg:items-end justify-center">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-2xl font-bold text-gray-900">$979.99</span>
-                  <span className="bg-green-600 text-white text-[10px] px-1 py-0.5 rounded font-bold">27% off</span>
+              <div className="w-full lg:w-48 lg:border-l border-gray-50 p-4 flex items-center lg:items-center gap-4 bg-[#fafafa] lg:flex-col">
+                <div className="">
+                  <span className="text-2xl font-black text-gray-900">${product.price}</span>
                 </div>
-                <button className="bg-[#1D61B9] hover:bg-blue-800 text-white w-full py-2 rounded-md font-semibold text-sm transition-colors">
+                <button className="bg-[#1D61B9] text-white w-full py-2.5 rounded font-bold text-[12px] uppercase tracking-wider hover:bg-blue-800 transition-colors">
                   Add to Cart
                 </button>
               </div>
             </div>
           ))}
 
-          {/* Load More Button */}
-          <div className="flex justify-center mt-10">
-            <button className="border border-[#1D61B9] text-[#1D61B9] px-10 py-2.5 font-semibold text-sm hover:bg-blue-50 transition-colors">
-              Load More Results
-            </button>
-          </div>
+          {/* Load More */}
+          {visibleCount < filteredProducts.length && (
+            <div className="flex justify-center pt-10">
+              <button 
+                onClick={() => setVisibleCount(prev => prev + 4)}
+                className="border-2 border-[#1D61B9] text-[#1D61B9] px-12 py-3 font-bold text-xs uppercase tracking-widest hover:bg-[#1D61B9] hover:text-white transition-all"
+              >
+                Load More Results
+              </button>
+            </div>
+          )}
         </main>
-
       </div>
     </div>
   );
