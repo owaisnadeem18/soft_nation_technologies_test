@@ -26,7 +26,7 @@ const SolutionsSection = () => {
   ];
 
   return (
-    <section className="max-w-7xl mx-auto sm:px-4 py-16 font-sans">
+    <section className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-16 font-sans">
       {/* Header */}
       <div className="text-center mb-12">
         <h2 className="text-3xl md:text-[42px] font-forma font-light tracking-widest text-gray-800 uppercase">
