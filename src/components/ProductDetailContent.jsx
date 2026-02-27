@@ -1,72 +1,31 @@
 "use client"
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Star, Minus, Plus, Search, Heart } from "lucide-react";
 import Image from "next/image";
 import { Spinner } from "./ui/spinner";
+import { useProductDetail } from "@/hooks/useProductDetail"; // Hook import kiya
 
 const ProductDetailContent = () => {
   const { id } = useParams();
   const router = useRouter();
   
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // States jo UI controls ke liye zaroori hain
   const [quantity, setQuantity] = useState(1);
-  
-  // Search & Related State
-  const [allItems, setAllItems] = useState([]); // Backup for searching
-  const [filteredList, setFilteredList] = useState([]); 
   const [searchTerm, setSearchTerm] = useState("");
 
-  // 1. Fetch Main Product & All Products (for search)
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        // Fetch current product
-        const res = await fetch(`https://fakestoreapi.com/products/${id}`);
-        const data = await res.json();
-        setProduct(data);
-
-        // Fetch all products for searching capability
-        const listRes = await fetch(`https://fakestoreapi.com/products`);
-        const listData = await listRes.json();
-        setAllItems(listData);
-        setFilteredList(listData.slice(0, 5)); // Initial view
-      } catch (error) {
-        console.error("Fetch Error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (id) loadData();
-  }, [id]);
-
-  // 2. DEBOUNCING LOGIC (Requirement)
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      if (searchTerm.trim() === "") {
-        setFilteredList(allItems.slice(0, 5));
-      } else {
-        const filtered = allItems.filter(item => 
-          item.title.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        setFilteredList(filtered);
-      }
-    }, 500); // 500ms wait
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, allItems]);
+  // Hook se fetching aur filtering ka data liya
+  const { product, filteredList, loading } = useProductDetail(id, searchTerm);
 
   if (loading) {
     return (
-        <div className="min-h-screen w-full flex items-center justify-center">
-    <Spinner size="lg" />
-  </div>
-);
-}
+      <div className="min-h-screen w-full flex items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
 
-  if (!product) return <div className="text-center py-20">Product not found.</div>;
+  if (!product) return <div className="text-center py-20 font-bold">Product not found.</div>;
 
   return (
     <main className="container mx-auto px-6 lg:px-12 py-12 bg-white">
@@ -111,7 +70,7 @@ const ProductDetailContent = () => {
       </div>
 
       {/* --- BOTTOM SEARCH SECTION (The Fix) --- */}
-      <div className="mt-20 max-w-5xl">
+      <div className="mt-20 max-w-5xl mx-auto">
         <div className="relative mb-8">
           <input 
             type="text" 
@@ -149,7 +108,6 @@ const ProductDetailContent = () => {
                   <p className="text-[12px] font-bold text-gray-600 uppercase line-clamp-1 flex-1">
                     {item.title}
                   </p>
-                  {/* <span className="text-blue-600 font-bold text-xs">${item.price}</span> */}
                 </div>
               )) : (
                 <p className="text-center py-4 text-gray-400 italic">No products found matching "{searchTerm}"</p>

@@ -1,74 +1,28 @@
 "use client"
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState } from 'react';
 import { ChevronRight, ChevronUp, Star } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { Spinner } from './ui/spinner';
+import { useProducts } from '@/hooks/useProducts'; // Hook import karein
 
 const ProductListing = () => {
   const router = useRouter();
   const { id: categoryId } = useParams();
-
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(4);
 
-  // Filter States
-  const [selectedRatings, setSelectedRatings] = useState([]);
-  const [selectedPriceRanges, setSelectedPriceRanges] = useState([]);
+  // --- YE RAHA HOOK ---
+  const {
+    loading,
+    priceRanges,
+    filteredProducts,
+    setSelectedRatings,
+    setSelectedPriceRanges,
+    selectedRatings,
+    selectedPriceRanges
+  } = useProducts(categoryId);
 
-  // 1. Fetch Data
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      try {
-        const url = categoryId 
-          ? `https://fakestoreapi.com/products/category/${categoryId}`
-          : `https://fakestoreapi.com/products`;
-        const res = await fetch(url);
-        const data = await res.json();
-        setProducts(data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProducts();
-  }, [categoryId]);
-
-  // 2. DYNAMIC PRICE RANGES (Requirement: Not hardcoded)
-  const priceRanges = useMemo(() => {
-    if (products.length === 0) return [];
-    const prices = products.map(p => p.price);
-    const min = Math.floor(Math.min(...prices));
-    const max = Math.ceil(Math.max(...prices));
-    
-    // Dividing price into 3 dynamic buckets
-    const step = (max - min) / 3;
-    return [
-      { label: `$${min} - $${Math.round(min + step)}`, min: min, max: min + step },
-      { label: `$${Math.round(min + step)} - $${Math.round(min + 2 * step)}`, min: min + step, max: min + 2 * step },
-      { label: `$${Math.round(min + 2 * step)} - $${max}`, min: min + 2 * step, max: max },
-    ];
-  }, [products]);
-
-  // 3. FILTERING LOGIC
-  const filteredProducts = useMemo(() => {
-    return products.filter(product => {
-      // Rating Filter
-      const matchesRating = selectedRatings.length === 0 || 
-        selectedRatings.some(r => Math.floor(product.rating.rate) >= r);
-
-      // Price Filter
-      const matchesPrice = selectedPriceRanges.length === 0 || 
-        selectedPriceRanges.some(range => product.price >= range.min && product.price <= range.max);
-
-      return matchesRating && matchesPrice;
-    });
-  }, [products, selectedRatings, selectedPriceRanges]);
-
-  // Handle Selection
+  // --- HANDLERS (Wahi purane wale) ---
   const toggleRating = (rate) => {
     setSelectedRatings(prev => prev.includes(rate) ? prev.filter(r => r !== rate) : [...prev, rate]);
   };
@@ -78,14 +32,11 @@ const ProductListing = () => {
       ? prev.filter(r => r.label !== range.label) : [...prev, range]);
   };
 
-  if (loading) 
-  {
-    return (
-  <div className="min-h-screen w-full flex items-center justify-center">
-    <Spinner size="lg" />
-  </div>
-);
-}
+  if (loading) return (
+    <div className="min-h-screen w-full flex items-center justify-center">
+      <Spinner size="lg" />
+    </div>
+  );
 
   return (
     <div className="bg-white min-h-screen font-sans">
@@ -95,9 +46,9 @@ const ProductListing = () => {
         <aside className="w-full md:w-64 shrink-0 border-r border-gray-50 pr-4">
           <h2 className="text-2xl font-bold mb-6 uppercase tracking-tighter">Filter</h2>
           
-          {/* Price Filter (Dynamic) */}
+          {/* Price Filter */}
           <div className="py-4 border-t">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-4 cursor-pointer">
               <span className="font-bold text-gray-800">Price</span>
               <ChevronUp size={16}/>
             </div>
@@ -107,6 +58,7 @@ const ProductListing = () => {
                   <input 
                     type="checkbox" 
                     onChange={() => togglePrice(range)}
+                    checked={selectedPriceRanges.some(r => r.label === range.label)}
                     className="w-4 h-4 rounded border-gray-300 accent-[#1D61B9]" 
                   />
                   {range.label}
@@ -117,7 +69,7 @@ const ProductListing = () => {
 
           {/* Rating Filter */}
           <div className="py-4 border-t">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-4 cursor-pointer">
               <span className="font-bold text-gray-800">Rating</span>
               <ChevronUp size={16}/>
             </div>
@@ -127,6 +79,7 @@ const ProductListing = () => {
                   <input 
                     type="checkbox" 
                     onChange={() => toggleRating(star)}
+                    checked={selectedRatings.includes(star)}
                     className="w-4 h-4 rounded border-gray-300 accent-[#1D61B9]" 
                   />
                   <div className="flex text-yellow-400">
@@ -177,7 +130,7 @@ const ProductListing = () => {
             </div>
           ))}
 
-          {/* Load More */}
+          {/* Load More Results */}
           {visibleCount < filteredProducts.length && (
             <div className="flex justify-center pt-10">
               <button 
