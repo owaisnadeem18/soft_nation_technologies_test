@@ -1,8 +1,16 @@
+"use client"
+
 import React from 'react';
 import Image from 'next/image';
 import { ChevronRight, ChevronUp } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const ProductListing = () => {
+
+  const router = useRouter()
+
+  console.log("router is => ", router)
+  
   // Fake array for structure (Baad mein API yahan map hogi)
   const products = Array(5).fill(null);
 
@@ -58,7 +66,8 @@ const ProductListing = () => {
         {/* RIGHT SIDE: Product List */}
         <main className="flex-1 space-y-4">
           {products.map((_, index) => (
-            <div 
+            <div
+              onClick={() => router.push(`/product/${index + 1}`)} 
               key={index} 
               className="border border-gray-200 rounded-sm p-6 flex flex-col lg:flex-row items-center gap-6 hover:shadow-md transition-shadow relative"
             >
