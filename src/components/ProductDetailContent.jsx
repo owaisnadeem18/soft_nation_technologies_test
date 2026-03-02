@@ -4,17 +4,15 @@ import { useParams, useRouter } from "next/navigation";
 import { Star, Minus, Plus, Search, Heart } from "lucide-react";
 import Image from "next/image";
 import { Spinner } from "./ui/spinner";
-import { useProductDetail } from "@/hooks/useProductDetail"; // Hook import kiya
+import { useProductDetail } from "@/hooks/useProductDetail"; 
 
 const ProductDetailContent = () => {
   const { id } = useParams();
   const router = useRouter();
   
-  // States jo UI controls ke liye zaroori hain
   const [quantity, setQuantity] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Hook se fetching aur filtering ka data liya
   const { product, filteredList, loading } = useProductDetail(id, searchTerm);
 
   if (loading) {

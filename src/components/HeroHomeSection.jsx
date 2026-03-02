@@ -6,7 +6,6 @@ const HeroHomeSection = () => {
     <section 
       className="relative w-full flex items-center overflow-hidden bg-[#051923]"
       style={{
-        // 1. Image as Background (Public folder mein image rakho)
         backgroundImage: `url(${heroImgBg.src})`, 
         backgroundSize: 'cover',
         backgroundPosition: 'center', 
@@ -23,7 +22,6 @@ const HeroHomeSection = () => {
           
           {/* Left Side: Empty or for Visual Balance (Since workers are on the left) */}
           <div className="hidden lg:block">
-            {/* Yahan aap wo wavy blue lines ka SVG daal sakte hain */}
           </div>
 
           {/* Right Side: Text Content */}
@@ -62,7 +60,6 @@ const HeroHomeSection = () => {
 
       {/* 4. Decorative Elements (The Blue Lines) */}
       <div className="absolute left-0 bottom-0 w-1/2 h-full pointer-events-none opacity-40 z-0">
-        {/* Yahan SVG ya PNG lines use karein jo image_5ed9dd mein hain */}
       </div>
     </section>
   );

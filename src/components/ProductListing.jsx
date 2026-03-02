@@ -11,7 +11,6 @@ const ProductListing = () => {
   const { id: categoryId } = useParams();
   const [visibleCount, setVisibleCount] = useState(4);
 
-  // --- YE RAHA HOOK ---
   const {
     loading,
     priceRanges,
@@ -22,7 +21,6 @@ const ProductListing = () => {
     selectedPriceRanges
   } = useProducts(categoryId);
 
-  // --- HANDLERS (Wahi purane wale) ---
   const toggleRating = (rate) => {
     setSelectedRatings(prev => prev.includes(rate) ? prev.filter(r => r !== rate) : [...prev, rate]);
   };
