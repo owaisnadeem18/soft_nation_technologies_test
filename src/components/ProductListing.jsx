@@ -4,11 +4,14 @@ import React, { useState } from 'react';
 import { ChevronRight, ChevronUp, Star } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { Spinner } from './ui/spinner';
-import { useProducts } from '@/hooks/useProducts'; // Hook import karein
+import { useProducts } from '@/hooks/useProducts'; 
 
 const ProductListing = () => {
   const router = useRouter();
   const { id: categoryId } = useParams();
+
+  console.log("Category ID from URL:", categoryId); // Debugging log
+
   const [visibleCount, setVisibleCount] = useState(4);
 
   const {

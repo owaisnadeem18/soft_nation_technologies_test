@@ -31,7 +31,7 @@ const ProductDetailContent = () => {
       <div className="flex flex-col lg:flex-row gap-12 items-start">
         <div className="w-full lg:w-3/5">
           <div className="border border-blue-100 rounded-lg p-10 flex items-center justify-center bg-white shadow-sm min-h-112.5">
-            <img src={product.image} alt={product.title} className="object-contain max-h-87.5" />
+            <Image src={product.image} alt={product.title} className="object-contain max-h-87.5" />
           </div>
         </div>
 
